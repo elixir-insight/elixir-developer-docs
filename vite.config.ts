@@ -1,4 +1,4 @@
-import adapter from '@sveltejs/adapter-static';
+import adapter from '@sveltejs/adapter-netlify';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
@@ -11,8 +11,9 @@ export default defineConfig({
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
 
-			// The docs are fully static: every route is prerendered into ./build.
-			adapter: adapter()
+			// Every route is prerendered, so Netlify serves ./build as static files.
+			// `publish` must match `publish` in netlify.toml.
+			adapter: adapter({ publish: 'build' })
 		})
 	]
 });

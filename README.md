@@ -3,15 +3,19 @@ Developer documentation for the ElixirPay payment gateway API. Covers authentica
 
 ## Development
 
-Built with SvelteKit 3 and Svelte 5, prerendered to static HTML with `@sveltejs/adapter-static`.
+Built with SvelteKit 3 and Svelte 5. Every page is prerendered to static HTML and deployed to Netlify with `@sveltejs/adapter-netlify` (see `netlify.toml`).
 
 ```sh
 npm install
 npm run dev       # http://localhost:5173
 npm run check     # type-check
-npm run build     # static site in ./build
+npm run build     # Netlify output in ./build and ./.netlify
 npm run preview   # serve the build
 ```
+
+## Deploying to Netlify
+
+Import the repository in Netlify. `netlify.toml` already sets the build command (`npm run build`), the publish directory (`build`) and Node 22, so there's nothing to configure in the UI.
 
 ## Where things live
 
