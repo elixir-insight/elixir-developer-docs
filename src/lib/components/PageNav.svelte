@@ -3,40 +3,46 @@
 	import { page } from '$app/state';
 	import { siblings } from '#lib/nav.ts';
 
-	// One card per page: "Next" while there is one, otherwise "Previous" on the last page.
-	const link = $derived.by(() => {
-		const { previous, next } = siblings(page.url.pathname);
-		if (next) return { ...next, direction: 'Next' as const };
-		if (previous) return { ...previous, direction: 'Previous' as const };
-		return undefined;
-	});
+	const links = $derived(siblings(page.url.pathname));
 </script>
 
-{#if link}
-	<nav class="pager" class:next={link.direction === 'Next'} aria-label="Pagination">
-		<a href={resolve(link.href)} rel={link.direction === 'Next' ? 'next' : 'prev'}>
-			<span class="direction">{link.direction}</span>
-			<span class="title">{link.title}</span>
-		</a>
+{#if links.previous || links.next}
+	<nav class="pager" aria-label="Pagination">
+		{#if links.previous}
+			<a class="prev" href={resolve(links.previous.href)} rel="prev">
+				<span class="direction">Previous</span>
+				<span class="title">{links.previous.title}</span>
+			</a>
+		{:else}
+			<span class="spacer" aria-hidden="true"></span>
+		{/if}
+		{#if links.next}
+			<a class="next" href={resolve(links.next.href)} rel="next">
+				<span class="direction">Next</span>
+				<span class="title">{links.next.title}</span>
+			</a>
+		{/if}
 	</nav>
 {/if}
 
 <style>
 	.pager {
 		display: flex;
+		justify-content: space-between;
+		gap: 16px;
 		padding-top: 56px;
 	}
 
-	.pager.next {
-		justify-content: flex-end;
-	}
-
-	a {
+	a,
+	.spacer {
 		display: flex;
 		flex-direction: column;
 		gap: 4px;
 		width: 280px;
-		max-width: 100%;
+		max-width: calc(50% - 8px);
+	}
+
+	a {
 		padding: 16px 18px;
 		border: 1px solid var(--color-line);
 		border-radius: var(--radius-md);
@@ -45,8 +51,9 @@
 			background-color 120ms ease;
 	}
 
-	.next a {
+	.next {
 		align-items: flex-end;
+		margin-left: auto;
 		text-align: right;
 	}
 
@@ -66,5 +73,27 @@
 		font-size: var(--text-body);
 		font-weight: 600;
 		line-height: 20px;
+	}
+
+	@media (max-width: 560px) {
+		.pager {
+			flex-direction: column;
+		}
+
+		a,
+		.spacer {
+			width: 100%;
+			max-width: none;
+		}
+
+		.spacer {
+			display: none;
+		}
+
+		.next {
+			align-items: flex-start;
+			margin-left: 0;
+			text-align: left;
+		}
 	}
 </style>

@@ -4,6 +4,7 @@
 	import EndpointBar from '#lib/components/EndpointBar.svelte';
 	import FieldTable, { type Field } from '#lib/components/FieldTable.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
+	import { paymentWebhook } from '#lib/api.ts';
 	import { callbackSample, webhookHandler } from '#lib/snippets.ts';
 
 	const setup: Field[] = [
@@ -21,19 +22,7 @@
 		'Find the order by clientOrderId, update it, then respond with HTTP 200.'
 	];
 
-	const payload: Field[] = [
-		{ name: 'status', type: 'string', description: 'Current payment status' },
-		{ name: 'orderId', type: 'string', description: 'ElixirPay order ID' },
-		{ name: 'attemptId', type: 'string', description: 'Payment attempt ID' },
-		{
-			name: 'clientOrderId',
-			type: 'string',
-			accent: true,
-			description: 'Your order reference — use it to find the order'
-		},
-		{ name: 'amount', type: 'string', description: 'Order amount' },
-		{ name: 'message', type: 'string', description: 'Human-readable result' }
-	];
+	const payload: Field[] = paymentWebhook.payload;
 </script>
 
 <DocPage>
