@@ -19,17 +19,17 @@
 	--color-brand-yellow: #f5c842;
 	--color-brand-sky: #6bb8e8;
 
-	/* Dark code panels */
-	--color-code: #0e1525;
-	--color-code-ink: #d6deeb;
-	--color-code-line: #1e2940;
-	--color-code-control: #2a3654;
-	--color-code-muted: #8a96ad;
-	--color-code-label: #c5cedd;
-	--color-code-success: #6ee7a8;
-	--color-code-success-bg: #0f9d582e;
-	--color-code-danger: #fca5a5;
-	--color-code-danger-bg: #c628282e;
+	/* Dark code panels — same green-dark chrome as the API playground */
+	--color-code: #141816;
+	--color-code-ink: #e7ece4;
+	--color-code-line: #2c332e;
+	--color-code-control: #343c36;
+	--color-code-muted: #8b938c;
+	--color-code-label: #c5cdc6;
+	--color-code-success: #7dce8a;
+	--color-code-success-bg: rgb(125 206 138 / 0.16);
+	--color-code-danger: #e7b4ae;
+	--color-code-danger-bg: rgb(231 180 174 / 0.16);
 
 	--font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 	--font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;

@@ -114,7 +114,7 @@
 			transform: none;
 			visibility: visible;
 			transition: transform 200ms ease;
-			box-shadow: 0 12px 32px rgb(15 23 42 / 0.12);
+			/* box-shadow: 0 12px 32px rgb(15 23 42 / 0.12); */
 		}
 
 		.sidebar-scroll {

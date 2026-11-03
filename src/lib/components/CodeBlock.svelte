@@ -7,6 +7,7 @@
 
 <script lang="ts">
 	import CopyButton from './CopyButton.svelte';
+	import { highlightCode, highlightJson, tokensToHtml } from '#lib/highlight.ts';
 	import { language, setLanguage } from '#lib/language.svelte.ts';
 
 	interface Props {
@@ -43,6 +44,9 @@
 
 	let localTab = $state<string>();
 	let shown = $state(false);
+	let tabsEl = $state<HTMLDivElement>();
+	let canScrollLeft = $state(false);
+	let canScrollRight = $state(false);
 
 	const activeLabel = $derived.by(() => {
 		if (!tabs?.length) return undefined;
@@ -55,9 +59,42 @@
 	);
 	const copyText = $derived(tabs ? current : (revealed ?? code));
 
+	const highlightedHtml = $derived.by(() => {
+		const trimmed = current.trimStart();
+		const tokens =
+			trimmed.startsWith('{') || trimmed.startsWith('[')
+				? highlightJson(current)
+				: highlightCode(current);
+		return tokensToHtml(tokens);
+	});
+
+	function updateTabOverflow() {
+		const el = tabsEl;
+		if (!el) {
+			canScrollLeft = false;
+			canScrollRight = false;
+			return;
+		}
+		const max = el.scrollWidth - el.clientWidth;
+		canScrollLeft = el.scrollLeft > 2;
+		canScrollRight = max > 2 && el.scrollLeft < max - 2;
+	}
+
 	function select(tab: string) {
 		if (syncLanguage) setLanguage(tab);
 		else localTab = tab;
+		queueMicrotask(() => {
+			document.getElementById(`${uid}-tab-${tab}`)?.scrollIntoView({
+				inline: 'nearest',
+				block: 'nearest',
+				behavior: 'smooth'
+			});
+			updateTabOverflow();
+		});
+	}
+
+	function scrollTabs(direction: 1 | -1) {
+		tabsEl?.scrollBy({ left: direction * Math.max(120, (tabsEl.clientWidth || 0) * 0.6), behavior: 'smooth' });
 	}
 
 	function onTabKey(event: KeyboardEvent, index: number) {
@@ -69,28 +106,79 @@
 		select(next.label);
 		document.getElementById(`${uid}-tab-${next.label}`)?.focus();
 	}
+
+	$effect(() => {
+		const el = tabsEl;
+		// Re-run when the tab set changes so overflow hints stay accurate.
+		void tabs?.length;
+		if (!el) return;
+
+		updateTabOverflow();
+		const onScroll = () => updateTabOverflow();
+		el.addEventListener('scroll', onScroll, { passive: true });
+
+		const observer = new ResizeObserver(updateTabOverflow);
+		observer.observe(el);
+		for (const child of el.children) observer.observe(child);
+
+		return () => {
+			el.removeEventListener('scroll', onScroll);
+			observer.disconnect();
+		};
+	});
 </script>
 
 <section class="panel" aria-label={label ?? filename ?? caption}>
 	<header class:tabbed={tabs}>
 		{#if tabs}
-			<div class="tabs" role="tablist" aria-label={label ?? 'Code samples'}>
-				{#each tabs as tab, index (tab.label)}
-					{@const selected = tab.label === activeLabel}
+			<div class="tabs-wrap" class:fade-left={canScrollLeft} class:fade-right={canScrollRight}>
+				<div
+					class="tabs"
+					bind:this={tabsEl}
+					role="tablist"
+					aria-label={label ?? 'Code samples'}
+				>
+					{#each tabs as tab, index (tab.label)}
+						{@const selected = tab.label === activeLabel}
+						<button
+							type="button"
+							role="tab"
+							id="{uid}-tab-{tab.label}"
+							aria-selected={selected}
+							aria-controls="{uid}-panel"
+							tabindex={selected ? 0 : -1}
+							class:selected
+							onclick={() => select(tab.label)}
+							onkeydown={(e) => onTabKey(e, index)}
+						>
+							{tab.label}
+						</button>
+					{/each}
+				</div>
+				{#if canScrollLeft}
 					<button
 						type="button"
-						role="tab"
-						id="{uid}-tab-{tab.label}"
-						aria-selected={selected}
-						aria-controls="{uid}-panel"
-						tabindex={selected ? 0 : -1}
-						class:selected
-						onclick={() => select(tab.label)}
-						onkeydown={(e) => onTabKey(e, index)}
+						class="scroll-hint left"
+						aria-label="Scroll tabs left"
+						onclick={() => scrollTabs(-1)}
 					>
-						{tab.label}
+						<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+							<path d="M8.5 3.5 5 7l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+						</svg>
 					</button>
-				{/each}
+				{/if}
+				{#if canScrollRight}
+					<button
+						type="button"
+						class="scroll-hint right"
+						aria-label="Scroll tabs right"
+						onclick={() => scrollTabs(1)}
+					>
+						<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+							<path d="M5.5 3.5 9 7l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+						</svg>
+					</button>
+				{/if}
 			</div>
 		{:else}
 			<div class="title">
@@ -126,7 +214,9 @@
 		id="{uid}-panel"
 		role={tabs ? 'tabpanel' : undefined}
 		aria-labelledby={tabs ? `${uid}-tab-${activeLabel}` : undefined}
-		tabindex="0"><code>{current}</code></pre>
+		tabindex="0"
+		><code>{@html highlightedHtml}</code></pre
+	>
 </section>
 
 <style>
@@ -134,9 +224,26 @@
 		display: flex;
 		flex-direction: column;
 		min-width: 0;
-		background: var(--color-code);
-		border-radius: var(--radius-lg);
 		overflow: hidden;
+		background: var(--color-code);
+		border-radius: 12px;
+	}
+
+	.panel :global(.tok-key),
+	.panel :global(.tok-plain) {
+		color: #e7ece4;
+	}
+
+	.panel :global(.tok-string),
+	.panel :global(.tok-number),
+	.panel :global(.tok-boolean),
+	.panel :global(.tok-null),
+	.panel :global(.tok-keyword) {
+		color: #7dce8a;
+	}
+
+	.panel :global(.tok-comment) {
+		color: #8b938c;
 	}
 
 	header {
@@ -196,12 +303,72 @@
 		color: var(--color-code-danger);
 	}
 
+	.tabs-wrap {
+		position: relative;
+		flex: 1;
+		min-width: 0;
+	}
+
 	.tabs {
 		display: flex;
 		gap: 2px;
 		min-width: 0;
 		overflow-x: auto;
 		scrollbar-width: none;
+		-ms-overflow-style: none;
+	}
+
+	.tabs::-webkit-scrollbar {
+		display: none;
+	}
+
+	.tabs-wrap.fade-left::before,
+	.tabs-wrap.fade-right::after {
+		content: '';
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		width: 36px;
+		pointer-events: none;
+		z-index: 1;
+	}
+
+	.tabs-wrap.fade-left::before {
+		left: 0;
+		background: linear-gradient(to right, var(--color-code), transparent);
+	}
+
+	.tabs-wrap.fade-right::after {
+		right: 0;
+		background: linear-gradient(to left, var(--color-code), transparent);
+	}
+
+	.scroll-hint {
+		position: absolute;
+		top: 50%;
+		z-index: 2;
+		display: grid;
+		place-items: center;
+		width: 24px;
+		height: 24px;
+		border: 1px solid var(--color-code-control);
+		border-radius: 999px;
+		background: #1c211d;
+		color: var(--color-code-label);
+		transform: translateY(-50%);
+	}
+
+	.scroll-hint.left {
+		left: 2px;
+	}
+
+	.scroll-hint.right {
+		right: 2px;
+	}
+
+	.scroll-hint:hover {
+		background: #2c332e;
+		color: #f3f6f2;
 	}
 
 	.tabs button {
@@ -219,8 +386,8 @@
 	}
 
 	.tabs button.selected {
-		background: var(--color-code-line);
-		color: #ffffff;
+		background: #2c332e;
+		color: #f3f6f2;
 		font-weight: 600;
 	}
 

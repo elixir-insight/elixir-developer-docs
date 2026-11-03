@@ -1,6 +1,6 @@
 import adapter from '@sveltejs/adapter-netlify';
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
 	plugins: [
@@ -11,9 +11,12 @@ export default defineConfig({
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
 
-			// Every route is prerendered, so Netlify serves ./build as static files.
-			// `publish` must match `publish` in netlify.toml.
+			// Docs pages are prerendered to ./build; POST /api/execute opts out and runs as a
+			// Netlify function. `publish` must match `publish` in netlify.toml.
 			adapter: adapter({ publish: 'build' })
 		})
-	]
+	],
+	test: {
+		include: ['src/**/*.test.ts']
+	}
 });

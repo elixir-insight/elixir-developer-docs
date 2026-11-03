@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { BASE_URL, createOrder, upiIntent } from '#lib/api.ts';
+	import { BASE_URL_ENV, createOrder, upiIntent } from '#lib/api.ts';
 	import DocPage from '#lib/components/DocPage.svelte';
 	import EndpointBar from '#lib/components/EndpointBar.svelte';
 	import FieldTable, { type Field } from '#lib/components/FieldTable.svelte';
@@ -42,7 +42,7 @@
 			title: upiIntent.title,
 			path: upiIntent.path,
 			href: '/api/upi-intent',
-			body: 'A upi:// link and QR code you show yourself'
+			body: 'A `upi://` link and QR code you show yourself'
 		},
 		{
 			method: 'HOOK',
@@ -52,6 +52,14 @@
 			body: 'Final payment status, sent to your server'
 		}
 	] as const;
+
+	function descriptionParts(text: string) {
+		return text.split(/(`[^`]+`)/).filter(Boolean).map((part) =>
+			part.startsWith('`') && part.endsWith('`')
+				? { kind: 'mark' as const, text: part.slice(1, -1) }
+				: { kind: 'text' as const, text: part }
+		);
+	}
 
 	const credentials: Field[] = [
 		{ name: 'orgId', description: 'Your organization ID, sent in every request body' },
@@ -76,8 +84,12 @@
 	{/snippet}
 
 	<section id="base-url" aria-label="Base URL">
-		<EndpointBar label="Base URL" value={BASE_URL} />
-		<p class="note">All requests use HTTPS and JSON, and must be sent from your server.</p>
+		<EndpointBar label="Base URL" value="${BASE_URL_ENV}" />
+		<p class="note">
+			ElixirPay issues your base URL with your credentials. Keep it in the {BASE_URL_ENV}
+			environment variable — every path on these pages is relative to it, and the version prefix
+			is already included. All requests use HTTPS and JSON, and must be sent from your server.
+		</p>
 	</section>
 
 	<section class="section roomy" aria-labelledby="how-a-payment-works">
@@ -105,7 +117,15 @@
 							<strong>{api.title}</strong>
 							<code>{api.path}</code>
 						</span>
-						<span class="api-desc">{api.body}</span>
+						<span class="api-desc">
+							{#each descriptionParts(api.body) as part, i (`${part.kind}-${i}-${part.text}`)}
+								{#if part.kind === 'mark'}
+									<code class="mark">{part.text}</code>
+								{:else}
+									{part.text}
+								{/if}
+							{/each}
+						</span>
 					</a>
 				</li>
 			{/each}
@@ -256,6 +276,17 @@
 		width: 220px;
 		font-size: var(--text-small);
 		line-height: 18px;
+	}
+
+	.mark {
+		padding: 1px 5px;
+		border-radius: 4px;
+		background: var(--color-primary-tint);
+		color: var(--color-primary);
+		font-family: var(--font-mono);
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 16px;
 	}
 
 	@media (max-width: 720px) {

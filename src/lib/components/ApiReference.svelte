@@ -1,9 +1,8 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { endpointMarkdown, endpointPrompt, endpointSamples, type Endpoint } from '#lib/api.ts';
-	import { toJson } from '#lib/samples.ts';
+	import { endpointMarkdown, endpointPrompt, type Endpoint } from '#lib/api.ts';
+	import ApiPlayground from './ApiPlayground.svelte';
 	import Callout from './Callout.svelte';
-	import CodeBlock from './CodeBlock.svelte';
 	import CopyButton from './CopyButton.svelte';
 	import DocPage from './DocPage.svelte';
 	import EndpointBar from './EndpointBar.svelte';
@@ -13,17 +12,11 @@
 
 	interface Props {
 		endpoint: Endpoint;
-		/** Extra content under the response samples (e.g. the QR preview). */
-		afterSamples?: Snippet;
+		/** Extra content directly under the Responses heading (e.g. the QR preview). */
+		afterResponsesHeading?: Snippet;
 	}
 
-	let { endpoint, afterSamples }: Props = $props();
-
-	const requestTabs = $derived(endpointSamples(endpoint));
-	const responseTabs = $derived(
-		endpoint.responses.map((r) => ({ label: r.sampleLabel, code: toJson(r.sample) }))
-	);
-	const [primaryResponse] = $derived(endpoint.responses);
+	let { endpoint, afterResponsesHeading }: Props = $props();
 </script>
 
 <DocPage>
@@ -43,23 +36,11 @@
 			{/snippet}
 			{endpoint.summary}
 		</PageHeader>
-		<EndpointBar method={endpoint.method} value={endpoint.url} />
+		<EndpointBar method={endpoint.method} value={endpoint.path} />
 	{/snippet}
 
 	{#snippet samples()}
-		<CodeBlock tabs={requestTabs} syncLanguage label="Request samples" size="sm" />
-		{#if endpoint.tabbedResponses}
-			<CodeBlock tabs={responseTabs} label="Response samples" size="sm" />
-		{:else}
-			<CodeBlock
-				code={toJson(primaryResponse.sample)}
-				badge={{ text: primaryResponse.status, tone: primaryResponse.tone }}
-				caption={primaryResponse.title}
-				label="Response sample"
-				size="sm"
-			/>
-		{/if}
-		{@render afterSamples?.()}
+		<ApiPlayground operationId={endpoint.operationId} />
 	{/snippet}
 
 	<section class="section" aria-labelledby="headers">
@@ -82,16 +63,22 @@
 
 	<section class="section" aria-labelledby="responses">
 		<h2 class="section-title" id="responses">Responses</h2>
-		{#each endpoint.responses as response, i (response.status)}
-			<ResponseCard
-				status={response.status}
-				tone={response.tone}
-				title={response.title}
-				fields={response.fields}
-				note={response.note}
-				open={i === 0}
-			/>
-		{/each}
+		{#if afterResponsesHeading}
+			<div class="after-heading">{@render afterResponsesHeading()}</div>
+		{/if}
+		<div class="responses">
+			{#each endpoint.responses as response, i (response.sampleLabel)}
+				<ResponseCard
+					status={response.status}
+					tone={response.tone}
+					title={response.title}
+					fields={response.fields}
+					cases={response.cases}
+					note={response.note}
+					open={i === 0}
+				/>
+			{/each}
+		</div>
 	</section>
 </DocPage>
 
@@ -115,5 +102,15 @@
 
 	.legend span {
 		color: var(--color-danger);
+	}
+
+	.after-heading {
+		margin: 16px 0 20px;
+	}
+
+	.responses {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
 	}
 </style>

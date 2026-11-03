@@ -11,34 +11,80 @@
 	let { text, label = 'Copy', tone = 'light', ariaLabel }: Props = $props();
 
 	let copied = $state(false);
+	let failed = $state(false);
 	let timer: ReturnType<typeof setTimeout> | undefined;
 
-	async function copy() {
+	function resolveText() {
 		const value = typeof text === 'function' ? text() : text;
+		return typeof value === 'string' ? value : String(value ?? '');
+	}
+
+	function fallbackCopy(value: string) {
+		const area = document.createElement('textarea');
+		area.value = value;
+		area.setAttribute('readonly', '');
+		area.style.cssText =
+			'position:fixed;top:0;left:0;width:1px;height:1px;padding:0;border:0;opacity:0;';
+		document.body.append(area);
+		area.focus();
+		area.select();
+		area.setSelectionRange(0, area.value.length);
+		let ok = false;
 		try {
-			await navigator.clipboard.writeText(value);
-		} catch {
-			// Clipboard API is unavailable on insecure origins; fall back to a hidden textarea.
-			const area = document.createElement('textarea');
-			area.value = value;
-			area.setAttribute('readonly', '');
-			area.style.position = 'fixed';
-			area.style.opacity = '0';
-			document.body.append(area);
-			area.select();
-			document.execCommand('copy');
+			ok = document.execCommand('copy');
+		} finally {
 			area.remove();
 		}
-		copied = true;
+		return ok;
+	}
+
+	async function copy(event: MouseEvent) {
+		const value = resolveText();
+		if (!value) return;
+
+		const button = event.currentTarget as HTMLButtonElement;
+		button.focus();
+
+		let ok = false;
+		try {
+			if (navigator.clipboard?.writeText) {
+				await navigator.clipboard.writeText(value);
+				ok = true;
+			} else {
+				ok = fallbackCopy(value);
+			}
+		} catch {
+			ok = fallbackCopy(value);
+		}
+
 		clearTimeout(timer);
+		if (!ok) {
+			failed = true;
+			copied = false;
+			timer = setTimeout(() => (failed = false), 1600);
+			return;
+		}
+
+		failed = false;
+		copied = true;
 		timer = setTimeout(() => (copied = false), 1600);
 	}
+
+	const visible = $derived(failed ? 'Failed' : copied ? 'Copied' : label);
+	const announced = $derived(
+		failed ? 'Copy failed' : copied ? 'Copied to clipboard' : ''
+	);
 </script>
 
-<button type="button" class="copy {tone}" onclick={copy} aria-label={ariaLabel}>
-	{copied ? 'Copied' : label}
+<button
+	type="button"
+	class="copy {tone}"
+	onclick={copy}
+	aria-label={copied || failed ? visible : (ariaLabel ?? label)}
+>
+	{visible}
 </button>
-<span class="visually-hidden" aria-live="polite">{copied ? 'Copied to clipboard' : ''}</span>
+<span class="visually-hidden" aria-live="polite">{announced}</span>
 
 <style>
 	.copy {

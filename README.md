@@ -9,9 +9,17 @@ Built with SvelteKit 3 and Svelte 5. Every page is prerendered to static HTML an
 npm install
 npm run dev       # http://localhost:5173
 npm run check     # type-check
+npm run test      # unit tests
 npm run build     # Netlify output in ./build and ./.netlify
 npm run preview   # serve the build
 ```
+
+Husky installs Git hooks on `npm install` (`prepare`):
+
+- **pre-commit** — `npm run check` then `npm run test`
+- **pre-push** — `npm run build`
+
+Skip once with `HUSKY=0 git commit …` or `git commit --no-verify` when you need an emergency bypass.
 
 ## Deploying to Netlify
 

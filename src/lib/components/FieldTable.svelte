@@ -32,12 +32,31 @@
 	const hasType = $derived(
 		columns ? columns.length === 3 : fields.some((f) => f.type || f.children?.some((c) => c.type))
 	);
+
+	/** Split `` `marked` `` spans so they can be styled inline. */
+	function descriptionParts(text: string) {
+		return text.split(/(`[^`]+`)/).filter(Boolean).map((part) =>
+			part.startsWith('`') && part.endsWith('`')
+				? { kind: 'mark' as const, text: part.slice(1, -1) }
+				: { kind: 'text' as const, text: part }
+		);
+	}
 </script>
 
 {#snippet name(field: Field)}
 	<span class="name {names}" class:accent={field.accent}>
 		{field.name}{#if field.required}<span class="required" aria-label="required">&nbsp;*</span>{/if}
 	</span>
+{/snippet}
+
+{#snippet description(text: string)}
+	{#each descriptionParts(text) as part, i (`${part.kind}-${i}-${part.text}`)}
+		{#if part.kind === 'mark'}
+			<code class="mark">{part.text}</code>
+		{:else}
+			{part.text}
+		{/if}
+	{/each}
 {/snippet}
 
 <div class="wrap" class:attached>
@@ -62,7 +81,7 @@
 				<tr class:highlight={field.highlight} class:parent={field.children}>
 					<th scope="row">{@render name(field)}</th>
 					{#if hasType}<td class="type">{field.type ?? ''}</td>{/if}
-					<td class="desc">{field.description}</td>
+					<td class="desc">{@render description(field.description)}</td>
 				</tr>
 				{#each field.children ?? [] as child, i (child.name)}
 					<tr
@@ -75,7 +94,7 @@
 							<span class="visually-hidden">{field.name}.</span>{@render name(child)}
 						</th>
 						{#if hasType}<td class="type">{child.type ?? ''}</td>{/if}
-						<td class="desc">{child.description}</td>
+						<td class="desc">{@render description(child.description)}</td>
 					</tr>
 				{/each}
 			{/each}
@@ -85,6 +104,7 @@
 
 <style>
 	.wrap {
+		background: var(--color-surface);
 		border: 1px solid var(--color-line);
 		border-radius: var(--radius-md);
 		overflow: hidden;
@@ -100,6 +120,8 @@
 		border-collapse: separate;
 		border-spacing: 0;
 		table-layout: fixed;
+		background: var(--color-surface);
+		color: var(--color-ink);
 		font-size: var(--text-small);
 		line-height: 22px;
 	}
@@ -137,7 +159,7 @@
 
 	thead th {
 		padding-block: 10px;
-		background: var(--color-surface-2);
+		background: #f1f4f8;
 		color: var(--color-ink);
 		font-size: var(--text-label);
 		font-weight: 600;
@@ -162,7 +184,7 @@
 
 	.name.accent {
 		color: var(--color-primary);
-		font-weight: 500;
+		font-weight: 600;
 	}
 
 	.required {
@@ -170,28 +192,51 @@
 	}
 
 	.type {
-		color: var(--color-muted);
+		color: #526277;
 		font-family: var(--font-mono);
 		font-size: 12px;
 	}
 
 	.desc {
-		color: var(--color-body);
+		color: #334155;
+	}
+
+	.mark {
+		padding: 1px 5px;
+		border-radius: 4px;
+		background: var(--color-primary-tint);
+		color: var(--color-primary);
+		font-family: var(--font-mono);
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 16px;
 	}
 
 	tr.highlight > * {
 		background: var(--color-primary-tint);
 	}
 
-	/* Nested fields (e.g. customer.*) sit on a tinted band, indented. */
+	/* Nested fields (e.g. customer.*) sit on a soft band, indented. */
 	tr.child > * {
 		padding-block: 8px;
-		background: var(--color-surface-2);
+		background: #f8fafc;
 		border-bottom: 0;
 	}
 
 	tr.child > :first-child {
 		padding-left: 32px;
+	}
+
+	tr.child .name {
+		color: #1e293b;
+	}
+
+	tr.child .type {
+		color: #526277;
+	}
+
+	tr.child .desc {
+		color: #334155;
 	}
 
 	tr.child.first > * {
@@ -251,7 +296,7 @@
 
 		tr.child {
 			padding-left: 32px;
-			background: var(--color-surface-2);
+			background: #f8fafc;
 		}
 
 		tr.child:not(.last) {
