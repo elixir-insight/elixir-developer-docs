@@ -1,18 +1,10 @@
 <script lang="ts" module>
-	export interface Field {
-		name: string;
-		description: string;
-		type?: string;
-		required?: boolean;
-		/** Draw attention to this row: primary-coloured name. */
-		accent?: boolean;
-		/** Tint the row, e.g. fields that only this endpoint has. */
-		highlight?: boolean;
-		children?: Field[];
-	}
+	export type { Field } from '#lib/field.ts';
 </script>
 
 <script lang="ts">
+	import type { Field } from '#lib/field.ts';
+
 	interface Props {
 		fields: Field[];
 		/** Column headings. Omit to render without a heading row. */

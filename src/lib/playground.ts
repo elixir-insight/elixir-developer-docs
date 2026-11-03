@@ -1,4 +1,4 @@
-import type { CodeTab } from '#lib/components/CodeBlock.svelte';
+import type { CodeTab } from '#lib/code-tab.ts';
 import {
 	findOperation,
 	JSON_CONTENT_TYPE,

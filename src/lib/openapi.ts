@@ -12,7 +12,7 @@ import {
 	type Endpoint,
 	type ResponseDef
 } from '#lib/api.ts';
-import type { Field } from '#lib/components/FieldTable.svelte';
+import type { Field } from '#lib/field.ts';
 import type { Json } from '#lib/samples.ts';
 
 export const JSON_CONTENT_TYPE = 'application/json';

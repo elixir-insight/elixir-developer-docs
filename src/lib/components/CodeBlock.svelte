@@ -1,12 +1,10 @@
 <script lang="ts" module>
-	export interface CodeTab {
-		label: string;
-		code: string;
-	}
+	export type { CodeTab } from '#lib/code-tab.ts';
 </script>
 
 <script lang="ts">
 	import CopyButton from './CopyButton.svelte';
+	import type { CodeTab } from '#lib/code-tab.ts';
 	import { highlightCode, highlightJson, tokensToHtml } from '#lib/highlight.ts';
 	import { language, setLanguage } from '#lib/language.svelte.ts';
 

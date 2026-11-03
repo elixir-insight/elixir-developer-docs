@@ -1,4 +1,4 @@
-import type { Field } from "#lib/components/FieldTable.svelte";
+import type { Field } from "#lib/field.ts";
 import { requestSamples, toJson, type Json } from "#lib/samples.ts";
 
 /**

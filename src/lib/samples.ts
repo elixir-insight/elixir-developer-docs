@@ -1,4 +1,4 @@
-import type { CodeTab } from '#lib/components/CodeBlock.svelte';
+import type { CodeTab } from '#lib/code-tab.ts';
 
 export type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 
