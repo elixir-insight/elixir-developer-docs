@@ -13,7 +13,7 @@
 	const steps = [
 		{
 			title: 'Get your keys',
-			body: 'ElixirPay gives you an orgId, a client key and a client secret. Add them to your server’s environment — never to frontend code.',
+			body: 'ElixirPay gives you an orgId, a client key and a client secret. Add them to your server’s environment never to frontend code.',
 			filename: '.env',
 			code: envMasked,
 			revealed: envTemplate
@@ -43,7 +43,7 @@
 	{#snippet intro()}
 		<PageHeader eyebrow="Getting started" title="Quickstart">
 			Take your first payment in four steps. Examples use Node.js; every API page has cURL, PHP,
-			Python and Java too.
+			Python, Java and Go too.
 		</PageHeader>
 	{/snippet}
 

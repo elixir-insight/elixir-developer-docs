@@ -87,7 +87,7 @@
 		<EndpointBar label="Base URL" value="${BASE_URL_ENV}" />
 		<p class="note">
 			ElixirPay issues your base URL with your credentials. Keep it in the {BASE_URL_ENV}
-			environment variable — every path on these pages is relative to it, and the version prefix
+			environment variable every path on these pages is relative to it, and the version prefix
 			is already included. All requests use HTTPS and JSON, and must be sent from your server.
 		</p>
 	</section>

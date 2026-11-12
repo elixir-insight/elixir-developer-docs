@@ -151,11 +151,44 @@ export function requestSamples(path: string, body: Json): CodeTab[] {
 		'    .send(request, HttpResponse.BodyHandlers.ofString());'
 	].join('\n');
 
+	const go = [
+		'import (',
+		'    "bytes"',
+		'    "io"',
+		'    "net/http"',
+		'    "os"',
+		')',
+		'',
+		'body := []byte(`',
+		indentBlock(toJson(body), ''),
+		'`)',
+		'',
+		'req, err := http.NewRequest(',
+		'    http.MethodPost,',
+		`    os.Getenv("API_BASE_URL")+"${path}",`,
+		'    bytes.NewReader(body),',
+		')',
+		'if err != nil {',
+		'    panic(err)',
+		'}',
+		'req.Header.Set("Content-Type", "application/json")',
+		'req.Header.Set("X-Client-Key", os.Getenv("ELIXIRPAY_CLIENT_KEY"))',
+		'req.Header.Set("X-Client-Secret", os.Getenv("ELIXIRPAY_CLIENT_SECRET"))',
+		'',
+		'res, err := http.DefaultClient.Do(req)',
+		'if err != nil {',
+		'    panic(err)',
+		'}',
+		'defer res.Body.Close()',
+		'data, _ := io.ReadAll(res.Body)'
+	].join('\n');
+
 	return [
 		{ label: 'cURL', code: curl },
 		{ label: 'Node.js', code: node },
 		{ label: 'PHP', code: phpCode },
 		{ label: 'Python', code: pythonCode },
-		{ label: 'Java', code: java }
+		{ label: 'Java', code: java },
+		{ label: 'Go', code: go }
 	];
 }

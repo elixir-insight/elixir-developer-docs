@@ -150,7 +150,7 @@ const commonFields = {
     name: "clientOrderId",
     type: "string",
     required: true,
-    description: "Your idempotency key — unique per organization",
+    description: "Your idempotency key unique per organization",
   },
   description: {
     name: "description",
@@ -170,7 +170,7 @@ const orderResponseFields: Field[] = [
   {
     name: "orderId",
     type: "string",
-    description: "ElixirPay order ID, prefixed with ORD_",
+    description: "ElixirPay order ID, prefixed with ORD",
   },
   {
     name: "clientOrderId",
@@ -603,7 +603,7 @@ export const upiIntent: Endpoint = {
         {
           name: "qrCode",
           accent: true,
-          description: "Base64 PNG — use directly as an image source",
+          description: "Base64 PNG use directly as an image source",
         },
       ],
       sample: {
@@ -661,7 +661,7 @@ export const paymentWebhook = {
       name: "clientOrderId",
       type: "string",
       accent: true,
-      description: "Your order reference — use it to find the order",
+      description: "Your order reference use it to find the order",
     },
     { name: "amount", type: "string", description: "Order amount" },
     { name: "message", type: "string", description: "Human-readable result" },

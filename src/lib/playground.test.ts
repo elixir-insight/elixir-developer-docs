@@ -17,7 +17,8 @@ describe('playground client', () => {
 			'Node.js',
 			'PHP',
 			'Python',
-			'Java'
+			'Java',
+			'Go'
 		]);
 		expect(model?.samples[0].code).toContain('$API_BASE_URL/payment/orders');
 		expect(model?.samples[0].code).not.toContain('elixirpay.org');

@@ -51,7 +51,7 @@ export function highlightJson(text: string): Token[] {
 }
 
 const CODE_CHUNK =
-	/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`|\/\/[^\n]*|#[^\n]*|\/\*[\s\S]*?\*\/|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|\b(?:const|let|var|await|async|return|import|from|new|function|class|if|else|for|while|true|false|null|None|True|False|def|package|public|private|static|void|String|System|curl|echo)\b/g;
+	/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`[\s\S]*?`|\/\/[^\n]*|#[^\n]*|\/\*[\s\S]*?\*\/|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|\b(?:const|let|var|await|async|return|import|from|new|function|class|if|else|for|while|true|false|null|nil|None|True|False|def|func|defer|package|public|private|static|void|String|System|curl|echo|panic)\b/g;
 
 /**
  * Lightweight VS Code–style colouring for the playground language samples (cURL, Node, PHP…).
@@ -80,7 +80,7 @@ export function highlightCode(text: string): Token[] {
 			tokens.push({ type: 'number', text: value });
 		} else if (value === 'true' || value === 'false' || value === 'True' || value === 'False') {
 			tokens.push({ type: 'boolean', text: value });
-		} else if (value === 'null' || value === 'None') {
+		} else if (value === 'null' || value === 'nil' || value === 'None') {
 			tokens.push({ type: 'null', text: value });
 		} else {
 			tokens.push({ type: 'keyword', text: value });
