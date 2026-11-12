@@ -1,4 +1,4 @@
-import type { CodeTab } from '#lib/components/CodeBlock.svelte';
+import type { CodeTab } from '#lib/code-tab.ts';
 
 export type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 
@@ -67,11 +67,15 @@ function indentBlock(text: string, prefix: string) {
 		.join('\n');
 }
 
-/** Request samples in every language the docs offer, for an authenticated JSON POST. */
-export function requestSamples(url: string, body: Json): CodeTab[] {
+/**
+ * Request samples in every language the docs offer, for an authenticated JSON POST.
+ * `path` is relative to $API_BASE_URL, which the samples read from the environment so
+ * the host never appears in the docs.
+ */
+export function requestSamples(path: string, body: Json): CodeTab[] {
 	const curl = [
 		'curl -X POST \\',
-		`  ${url} \\`,
+		`  "$API_BASE_URL${path}" \\`,
 		'  -H "Content-Type: application/json" \\',
 		'  -H "X-Client-Key: $ELIXIRPAY_CLIENT_KEY" \\',
 		'  -H "X-Client-Secret: $ELIXIRPAY_CLIENT_SECRET" \\',
@@ -79,7 +83,7 @@ export function requestSamples(url: string, body: Json): CodeTab[] {
 	].join('\n');
 
 	const node = [
-		`const res = await fetch("${url}", {`,
+		`const res = await fetch(\`\${process.env.API_BASE_URL}${path}\`, {`,
 		'  method: "POST",',
 		'  headers: {',
 		'    "Content-Type": "application/json",',
@@ -95,7 +99,7 @@ export function requestSamples(url: string, body: Json): CodeTab[] {
 		'<?php',
 		`$payload = json_encode(${literal(body, php)});`,
 		'',
-		`$ch = curl_init("${url}");`,
+		`$ch = curl_init(getenv("API_BASE_URL") . "${path}");`,
 		'curl_setopt_array($ch, [',
 		'    CURLOPT_POST => true,',
 		'    CURLOPT_RETURNTRANSFER => true,',
@@ -115,7 +119,7 @@ export function requestSamples(url: string, body: Json): CodeTab[] {
 		'import requests',
 		'',
 		'response = requests.post(',
-		`    "${url}",`,
+		`    os.environ["API_BASE_URL"] + "${path}",`,
 		'    headers={',
 		'        "X-Client-Key": os.environ["ELIXIRPAY_CLIENT_KEY"],',
 		'        "X-Client-Secret": os.environ["ELIXIRPAY_CLIENT_SECRET"],',
@@ -136,7 +140,7 @@ export function requestSamples(url: string, body: Json): CodeTab[] {
 		'    """;',
 		'',
 		'HttpRequest request = HttpRequest.newBuilder()',
-		`    .uri(URI.create("${url}"))`,
+		`    .uri(URI.create(System.getenv("API_BASE_URL") + "${path}"))`,
 		'    .header("Content-Type", "application/json")',
 		'    .header("X-Client-Key", System.getenv("ELIXIRPAY_CLIENT_KEY"))',
 		'    .header("X-Client-Secret", System.getenv("ELIXIRPAY_CLIENT_SECRET"))',
@@ -147,11 +151,44 @@ export function requestSamples(url: string, body: Json): CodeTab[] {
 		'    .send(request, HttpResponse.BodyHandlers.ofString());'
 	].join('\n');
 
+	const go = [
+		'import (',
+		'    "bytes"',
+		'    "io"',
+		'    "net/http"',
+		'    "os"',
+		')',
+		'',
+		'body := []byte(`',
+		indentBlock(toJson(body), ''),
+		'`)',
+		'',
+		'req, err := http.NewRequest(',
+		'    http.MethodPost,',
+		`    os.Getenv("API_BASE_URL")+"${path}",`,
+		'    bytes.NewReader(body),',
+		')',
+		'if err != nil {',
+		'    panic(err)',
+		'}',
+		'req.Header.Set("Content-Type", "application/json")',
+		'req.Header.Set("X-Client-Key", os.Getenv("ELIXIRPAY_CLIENT_KEY"))',
+		'req.Header.Set("X-Client-Secret", os.Getenv("ELIXIRPAY_CLIENT_SECRET"))',
+		'',
+		'res, err := http.DefaultClient.Do(req)',
+		'if err != nil {',
+		'    panic(err)',
+		'}',
+		'defer res.Body.Close()',
+		'data, _ := io.ReadAll(res.Body)'
+	].join('\n');
+
 	return [
 		{ label: 'cURL', code: curl },
 		{ label: 'Node.js', code: node },
 		{ label: 'PHP', code: phpCode },
 		{ label: 'Python', code: pythonCode },
-		{ label: 'Java', code: java }
+		{ label: 'Java', code: java },
+		{ label: 'Go', code: go }
 	];
 }

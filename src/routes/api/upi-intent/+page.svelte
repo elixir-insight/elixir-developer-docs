@@ -5,7 +5,7 @@
 </script>
 
 <ApiReference endpoint={upiIntent}>
-	{#snippet afterSamples()}
+	{#snippet afterResponsesHeading()}
 		<figure class="qr-card">
 			<div class="qr">
 				<img src={sampleQr} alt="QR code decoded from the sample response" width="96" height="96" />

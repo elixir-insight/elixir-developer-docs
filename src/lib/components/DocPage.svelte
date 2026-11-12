@@ -35,6 +35,8 @@
 <style>
 	.page {
 		display: grid;
+		width: 100%;
+		box-sizing: border-box;
 		grid-template-columns: minmax(0, 680px);
 		grid-template-areas:
 			'intro'
@@ -98,17 +100,19 @@
 			'intro'
 			'samples'
 			'body';
-		grid-template-columns: minmax(0, 720px);
+		grid-template-columns: minmax(0, 1fr);
 	}
 
 	@media (min-width: 1300px) {
 		.with-samples {
-			grid-template-columns: minmax(0, 600px) minmax(0, 432px);
+			/* Fill the main pane: article grows a bit faster than the playground. */
+			grid-template-columns: minmax(0, 1.25fr) minmax(360px, 1fr);
 			grid-template-rows: auto 1fr;
 			grid-template-areas:
 				'intro samples'
 				'body samples';
-			column-gap: 48px;
+			column-gap: 40px;
+			padding-right: 48px;
 		}
 
 		.samples {
@@ -117,9 +121,11 @@
 		}
 	}
 
-	@media (min-width: 1440px) {
+	@media (min-width: 1600px) {
 		.with-samples {
-			grid-template-columns: 600px minmax(432px, 1fr);
+			grid-template-columns: minmax(0, 1.3fr) minmax(400px, 1fr);
+			column-gap: 48px;
+			padding-inline: 56px 56px;
 		}
 	}
 

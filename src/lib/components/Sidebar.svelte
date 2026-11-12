@@ -45,11 +45,18 @@
 	}
 
 	.group-title {
-		padding: 0 10px 8px;
-		color: var(--color-muted);
-		font-size: var(--text-label);
-		font-weight: 600;
-		line-height: 16px;
+		margin: 0;
+		padding: 0 10px 10px;
+		color: var(--color-body);
+		font-size: 11px;
+		font-weight: 800;
+		letter-spacing: 0.06em;
+		line-height: 14px;
+		text-transform: uppercase;
+	}
+
+	.group + .group .group-title {
+		padding-top: 8px;
 	}
 
 	ul {
