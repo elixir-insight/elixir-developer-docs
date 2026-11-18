@@ -1,0 +1,110 @@
+name: CI/CD
+
+# CI runs on every pull request and push to dev/main.
+# CD runs only on pushes to dev/main, and only after CI passes: it starts a build of the
+# matching Amplify branch, which runs amplify.yml and deploys the result.
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+
+# A newer push to the same branch or PR cancels the run still in progress.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: Check, test & build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          # Same major as the Amplify build image (amplify.yml) and compute runtime (nodejs22.x).
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run check
+
+      - name: Unit tests
+        run: npm test
+
+      # API_BASE_URL is read at run time, not build time, so the build needs no secrets.
+      - name: Build (Amplify output)
+        run: npm run build
+
+      - name: Verify Amplify bundle
+        run: |
+          test -f build/deploy-manifest.json
+          test -f build/compute/default/index.js
+          test -d build/static
+
+  deploy:
+    name: Deploy to Amplify (${{ github.ref_name }})
+    needs: ci
+    if: >-
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      (github.ref_name == 'dev' || github.ref_name == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Create these environments under Settings → Environments to add approvals or
+    # per-branch variables; dev and main deploy to the Amplify branch of the same name.
+    environment:
+      name: ${{ github.ref_name }}
+    permissions:
+      contents: read
+      id-token: write # OIDC: assume the AWS role without long-lived keys
+    env:
+      AMPLIFY_APP_ID: ${{ vars.AMPLIFY_APP_ID }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      BRANCH: ${{ github.ref_name }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Start Amplify build
+        id: start
+        run: |
+          JOB_ID=$(aws amplify start-job \
+            --app-id "$AMPLIFY_APP_ID" \
+            --branch-name "$BRANCH" \
+            --job-type RELEASE \
+            --commit-id "$GITHUB_SHA" \
+            --commit-message "CI run ${GITHUB_RUN_ID}" \
+            --query 'jobSummary.jobId' --output text)
+          echo "job_id=$JOB_ID" >> "$GITHUB_OUTPUT"
+          echo "Started Amplify job $JOB_ID for $BRANCH"
+
+      - name: Wait for deployment
+        env:
+          JOB_ID: ${{ steps.start.outputs.job_id }}
+        run: |
+          while true; do
+            STATUS=$(aws amplify get-job --app-id "$AMPLIFY_APP_ID" --branch-name "$BRANCH" \
+              --job-id "$JOB_ID" --query 'job.summary.status' --output text)
+            echo "Amplify job $JOB_ID: $STATUS"
+            case "$STATUS" in
+              SUCCEED) break ;;
+              FAILED|CANCELLED) echo "::error::Amplify deployment $STATUS"; exit 1 ;;
+            esac
+            sleep 20
+          done
+          echo "### Deployed \`$BRANCH\` to Amplify (job $JOB_ID)" >> "$GITHUB_STEP_SUMMARY"
