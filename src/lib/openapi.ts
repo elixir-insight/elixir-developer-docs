@@ -3,7 +3,7 @@
  * schemas and payloads here can never drift from the reference pages.
  *
  * It deliberately has no `servers` entry: the base URL lives in the server-only
- * `API_BASE_URL` variable, and every path below is relative to it.
+ * `SANDBOX_API_BASE_URL` variable (plus the /api/v1 prefix), and every path below is relative to it.
  */
 import {
 	createOrder,

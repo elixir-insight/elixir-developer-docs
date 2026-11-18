@@ -1,6 +1,6 @@
-import { API_BASE_URL } from '$app/env/private';
+import { SANDBOX_API_BASE_URL } from '$app/env/private';
 import { error, json } from '@sveltejs/kit';
-import { executeOperation, parseExecuteRequest } from '#lib/server/execute.ts';
+import { API_VERSION_PATH, executeOperation, parseExecuteRequest } from '#lib/server/execute.ts';
 import type { RequestHandler } from './$types';
 
 // The rest of the site is prerendered; this one has to run on each request.
@@ -19,5 +19,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		error(400, 'Expected { operationId, headers: [{ name, value }], bodyText }.');
 	}
 
-	return json(await executeOperation(parsed, { baseUrl: API_BASE_URL }));
+	return json(await executeOperation(parsed, {
+			baseUrl: SANDBOX_API_BASE_URL ? SANDBOX_API_BASE_URL + API_VERSION_PATH : undefined
+		}));
 };

@@ -51,7 +51,7 @@ describe('executeOperation', () => {
 			{ baseUrl: undefined, fetch }
 		);
 		expect(result).toMatchObject({ kind: 'rejected' });
-		expect((result as { message: string }).message).toContain('API_BASE_URL');
+		expect((result as { message: string }).message).toContain('SANDBOX_API_BASE_URL');
 		expect(fetch).not.toHaveBeenCalled();
 	});
 
