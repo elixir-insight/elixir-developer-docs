@@ -1,6 +1,6 @@
 import { document } from '#lib/openapi.ts';
 
-// Prerendered, so the build writes build/openapi.json and Netlify serves it as a static file.
+// Prerendered at build time, so /openapi.json is served from the generated file, not computed per request.
 export const prerender = true;
 
 export function GET() {

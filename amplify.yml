@@ -1,0 +1,19 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        # SvelteKit 3 requires Node 22.17 or newer.
+        - nvm install 22 && nvm use 22
+        - npm ci
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    # Must match `out` passed to amplify-adapter in vite.config.ts.
+    baseDirectory: build
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*

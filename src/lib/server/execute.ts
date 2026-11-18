@@ -7,16 +7,18 @@ import type { Json } from '#lib/samples.ts';
  *
  * This is not a proxy. The caller names an `operationId` from the OpenAPI document and
  * nothing else: there is no target URL in the request shape, the path comes from the
- * document, and the host comes from API_BASE_URL on the server. No credential is added or
+ * document, and the host comes from SANDBOX_API_BASE_URL on the server. No credential is added or
  * stored here — whatever the reader typed is forwarded once and then forgotten — and
  * neither headers nor bodies are ever logged.
  */
 
 export const MAX_BODY_BYTES = 32 * 1024;
 export const DEFAULT_TIMEOUT_MS = 20_000;
+/** Version prefix appended to SANDBOX_API_BASE_URL; documented paths are relative to it. */
+export const API_VERSION_PATH = '/api/v1';
 
 export interface ExecuteOptions {
-	/** API_BASE_URL as configured on the server. Undefined when the server is unconfigured. */
+	/** Sandbox origin plus API_VERSION_PATH. Undefined when the server is unconfigured. */
 	baseUrl: string | undefined;
 	fetch?: typeof globalThis.fetch;
 	timeoutMs?: number;
@@ -43,7 +45,7 @@ export function parseExecuteRequest(payload: unknown): ExecuteRequest | undefine
 
 function resolveBaseUrl(baseUrl: string | undefined, path: string): URL | string {
 	if (!baseUrl) {
-		return 'The docs server has no API base URL configured, so requests cannot be sent. Set API_BASE_URL and restart it.';
+		return 'The docs server has no API base URL configured, so requests cannot be sent. Set SANDBOX_API_BASE_URL and restart it.';
 	}
 	let url: URL;
 	try {

@@ -1,4 +1,4 @@
-import adapter from '@sveltejs/adapter-netlify';
+import adapter from 'amplify-adapter';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vitest/config';
 
@@ -11,9 +11,10 @@ export default defineConfig({
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
 
-			// Docs pages are prerendered to ./build; POST /api/execute opts out and runs as a
-			// Netlify function. `publish` must match `publish` in netlify.toml.
-			adapter: adapter({ publish: 'build' })
+			// AWS Amplify Hosting (amplify-adapter, default options): writes build/ with static/,
+			// compute/default (Node 22 server for /api/execute and prerendered pages) and
+			// deploy-manifest.json. The default `out: 'build'` must match amplify.yml.
+			adapter: adapter()
 		})
 	],
 	test: {

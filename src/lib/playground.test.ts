@@ -2,8 +2,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { createOrder } from '#lib/api.ts';
 import {
 	playgroundModel,
-	requestBodyIsComplete,
-	requestBodySchema,
 	runOperation
 } from '#lib/playground.ts';
 
@@ -22,17 +20,6 @@ describe('playground client', () => {
 		]);
 		expect(model?.samples[0].code).toContain('$API_BASE_URL/payment/orders');
 		expect(model?.samples[0].code).not.toContain('elixirpay.org');
-	});
-
-	it('treats the documented create-order sample as complete and rejects missing fields', () => {
-		const schema = requestBodySchema(createOrder.operationId);
-		const body = JSON.parse(playgroundModel(createOrder.operationId)!.bodyText);
-		expect(requestBodyIsComplete(body, schema)).toBe(true);
-		const { orgId: _orgId, ...incomplete } = body;
-		expect(requestBodyIsComplete(incomplete, schema)).toBe(false);
-		expect(
-			requestBodyIsComplete({ ...body, customer: { ...body.customer, email: '' } }, schema)
-		).toBe(false);
 	});
 
 	it('does not call the API when the body is invalid JSON', async () => {

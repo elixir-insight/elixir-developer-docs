@@ -3,22 +3,16 @@
 	import { highlightJson } from '#lib/highlight.ts';
 	import {
 		playgroundModel,
-		requestBodyIsComplete,
-		requestBodySchema,
 		responseText,
-		// Live proxy — re-enable with LIVE_API below.
-		// runOperation,
+		runOperation,
 		type ExecuteResult,
 		type HeaderField
 	} from '#lib/playground.ts';
-	import { toJson, type Json } from '#lib/samples.ts';
+	import { toJson } from '#lib/samples.ts';
 
 	interface Props {
 		operationId: string;
 	}
-
-	/** Flip to `true` to call POST /api/execute against the real API again. */
-	const LIVE_API = false;
 
 	let { operationId }: Props = $props();
 
@@ -30,7 +24,6 @@
 		throw new Error(`No documented POST operation with id "${operationId}".`);
 	}
 	const model = resolved;
-	const bodySchema = requestBodySchema(model.operationId);
 
 	let headers = $state<HeaderField[]>(model.headers.map((h) => ({ ...h })));
 	let bodyText = $state(model.bodyText);
@@ -65,48 +58,11 @@
 			.join('');
 	}
 
-	function mockHttp(status: number, value: Json): ExecuteResult {
-		return {
-			kind: 'http',
-			status,
-			ok: status >= 200 && status < 300,
-			body: toJson(value),
-			json: value
-		};
-	}
-
-	function findExample(...labels: string[]) {
-		return model.examples.find((example) =>
-			labels.some((label) => example.label === label || example.status === label)
-		);
-	}
-
-	function successMock(): ExecuteResult {
-		const example =
-			findExample('created', 'Success', '201', '200') ??
-			model.examples.find((e) => !e.status.startsWith('4') && !e.status.startsWith('5'));
-		if (!example) {
-			return { kind: 'rejected', message: 'No documented success sample is available.' };
-		}
-		return mockHttp(Number(example.status) || 201, example.value);
-	}
-
-	function failMock(): ExecuteResult {
-		const example = findExample('invalid-payload', '400', 'Failure', 'rejected', '502');
-		if (example) return mockHttp(Number(example.status) || 400, example.value);
-		return mockHttp(400, {
-			message: 'Invalid Payload',
-			statusCode: 400
-		});
-	}
-
 	async function run() {
 		clientInvalid = false;
-		const missingHeader = headers.some((header) => !header.value.trim());
 
-		let body: unknown;
 		try {
-			body = JSON.parse(bodyText);
+			JSON.parse(bodyText);
 		} catch {
 			clientInvalid = true;
 			result = { kind: 'invalid-json' };
@@ -116,23 +72,11 @@
 		running = true;
 		result = null;
 		try {
-			if (!LIVE_API) {
-				// Live API temporarily disabled — documented mocks only.
-				await new Promise((resolve) => setTimeout(resolve, 180));
-				const valid = !missingHeader && requestBodyIsComplete(body, bodySchema);
-				result = valid ? successMock() : failMock();
-				return;
-			}
-
-			// result = await runOperation({
-			// 	operationId: model.operationId,
-			// 	headers: headers.map(({ name, value }) => ({ name, value })),
-			// 	bodyText
-			// });
-			result = {
-				kind: 'rejected',
-				message: 'Live API is disabled. Set LIVE_API to true in ApiPlayground.svelte.'
-			};
+			result = await runOperation({
+				operationId: model.operationId,
+				headers: headers.map(({ name, value }) => ({ name, value })),
+				bodyText
+			});
 		} finally {
 			running = false;
 		}
@@ -203,7 +147,7 @@
 			</div>
 			<div class="response">
 				{#if running}
-					<p class="placeholder">{LIVE_API ? 'Waiting for the API…' : 'Loading mock response…'}</p>
+					<p class="placeholder">Waiting for the API…</p>
 				{:else if !result}
 					<p class="placeholder">No request has been sent.</p>
 				{:else if result.kind === 'invalid-json'}
@@ -217,9 +161,6 @@
 				{:else if result.body === ''}
 					<p class="placeholder">The response body was empty.</p>
 				{:else}
-					{#if !LIVE_API}
-						<p class="placeholder mock-note">Documented sample — live API temporarily disabled.</p>
-					{/if}
 					<pre class="body"><code>{@html highlightedResponse}</code></pre>
 				{/if}
 			</div>
@@ -231,8 +172,8 @@
 			<div class="examples-copy">
 				<h2 class="examples-title">Documented examples</h2>
 				<p class="examples-note">
-					Samples from the OpenAPI document. Run request uses these as mocks while live API
-					is disabled: complete payload → success, missing fields → invalid payload.
+					Samples from the OpenAPI document. Run request sends your edited request to the
+					ElixirPay sandbox and shows its real response.
 				</p>
 			</div>
 			<CodeBlock tabs={exampleTabs} label="Documented examples" size="sm" />
@@ -489,11 +430,6 @@
 
 	.placeholder.error {
 		color: #e7b4ae;
-	}
-
-	.placeholder.mock-note {
-		padding-bottom: 0;
-		color: #8b938c;
 	}
 
 	.body {

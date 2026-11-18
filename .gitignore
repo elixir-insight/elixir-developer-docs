@@ -3,7 +3,7 @@ node_modules
 # Output
 .output
 .vercel
-.netlify
+.amplify-hosting
 .wrangler
 /.svelte-kit
 /build

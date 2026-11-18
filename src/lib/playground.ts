@@ -1,11 +1,9 @@
 import type { CodeTab } from '#lib/code-tab.ts';
 import {
 	findOperation,
-	JSON_CONTENT_TYPE,
 	requestExample,
 	responseExamples,
-	type LabelledExample,
-	type Schema
+	type LabelledExample
 } from '#lib/openapi.ts';
 import { requestSamples, toJson, type Json } from '#lib/samples.ts';
 
@@ -68,40 +66,6 @@ export function playgroundModel(operationId: string): PlaygroundModel | undefine
 /** The body to show for a completed request: pretty JSON when the API returned JSON. */
 export function responseText(result: Extract<ExecuteResult, { kind: 'http' }>): string {
 	return result.json === null ? result.body : toJson(result.json);
-}
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-/** True when every documented required field is present and non-empty. */
-export function requestBodyIsComplete(body: unknown, schema: Schema | undefined): boolean {
-	if (!schema) return isPlainObject(body);
-
-	if (schema.type === 'object' || schema.properties || schema.required) {
-		if (!isPlainObject(body)) return false;
-		for (const key of schema.required ?? []) {
-			const value = body[key];
-			const property = schema.properties?.[key];
-			if (value === undefined || value === null) return false;
-			if (typeof value === 'string' && value.trim() === '') return false;
-			if (property && !requestBodyIsComplete(value, property)) return false;
-		}
-		return true;
-	}
-
-	if (schema.type === 'array') {
-		return Array.isArray(body);
-	}
-
-	if (typeof body === 'string') return body.trim() !== '';
-	return body !== undefined && body !== null;
-}
-
-/** Request JSON schema for a documented operation, when one exists. */
-export function requestBodySchema(operationId: string): Schema | undefined {
-	const resolved = findOperation(operationId);
-	return resolved?.operation.requestBody.content[JSON_CONTENT_TYPE]?.schema;
 }
 
 export interface RunOptions {
