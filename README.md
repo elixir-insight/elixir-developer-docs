@@ -25,7 +25,7 @@ Skip once with `HUSKY=0 git commit …` or `git commit --no-verify` when you nee
 
 1. In the Amplify console choose **Create new app**, connect the Git provider and pick the repository and branch.
 2. Amplify picks up `amplify.yml` from the repo root (Node 22, `npm ci`, `npm run build`, artifacts from `build`). Leave the build settings as detected.
-3. Under **Hosting → Environment variables**, set `SANDBOX_API_BASE_URL` (the sandbox origin, without `/api/v1`) for the playground. Without it the docs still deploy and the playground reports that the server is not configured.
+3. Under **Hosting → Environment variables**, set `SANDBOX_API_BASE_URL` (the sandbox origin, without `/api/v1`) for the playground. Without it the docs still deploy and the playground reports that the server is not configured. Amplify only passes console variables to the build, so `scripts/amplify-runtime-env.mjs` (run from `amplify.yml`) copies it next to the server where it is read at run time. Add any new server variable to the `NAMES` list in that script.
 4. Save and deploy.
 
 Response headers (security headers and long-term caching for `/_app/immutable/*`) live in `customHttp.yml`.
