@@ -9,6 +9,8 @@ frontend:
     build:
       commands:
         - npm run build
+        # Console env vars are build-only on Amplify; copy them next to the server so it can read them.
+        - node scripts/amplify-runtime-env.mjs
   artifacts:
     # Must match `out` passed to amplify-adapter in vite.config.ts.
     baseDirectory: build
